@@ -13,7 +13,7 @@ namespace Pidgin.Tests
         public void TestEmptyInput()
         {
             var input = "";
-            var state = new ParseState<char>(CharDefaultConfiguration.Instance, ToStream(input));
+            var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, ToStream(input), Unit.Value);
 
             Assert.Equal(SourcePosDelta.Zero, state.ComputeSourcePosDelta());
             Assert.False(state.HasCurrent);
@@ -23,7 +23,7 @@ namespace Pidgin.Tests
         public void TestAdvance()
         {
             var input = "foo";
-            var state = new ParseState<char>(CharDefaultConfiguration.Instance, ToStream(input));
+            var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, ToStream(input), Unit.Value);
 
             Consume('f', ref state);
             Consume('o', ref state);
@@ -36,7 +36,7 @@ namespace Pidgin.Tests
         public void TestDiscardChunk()
         {
             var input = ('f' + new string('o', ChunkSize));  // Length == ChunkSize + 1
-            var state = new ParseState<char>(CharDefaultConfiguration.Instance, ToStream(input));
+            var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, ToStream(input), Unit.Value);
 
             Consume('f', ref state);
             Consume(new string('o', ChunkSize), ref state);
@@ -110,7 +110,7 @@ namespace Pidgin.Tests
         {
             {
                 var input = "a\n\nb";
-                var state = new ParseState<char>(DefaultConfiguration<char>.Instance, input.AsSpan());
+                var state = new ParseState<char, Unit>(DefaultConfiguration<char>.Instance, input.AsSpan(), Unit.Value);
 
                 state.Advance(input.Length);
 
@@ -128,14 +128,14 @@ namespace Pidgin.Tests
                 + "aa";  // a partial chunk with no newlines
 
             {
-                var state = new ParseState<char>(CharDefaultConfiguration.Instance, input.AsSpan());
+                var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, input.AsSpan(), Unit.Value);
 
                 state.Advance(input.Length);
 
                 Assert.Equal(new SourcePosDelta(6, Vector<short>.Count * 2 + 8), state.ComputeSourcePosDelta());
             }
             {
-                var state = new ParseState<char>(CharDefaultConfiguration.Instance, input.AsSpan());
+                var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, input.AsSpan(), Unit.Value);
 
                 state.Advance(1);
                 state.ComputeSourcePosDelta();
@@ -148,7 +148,7 @@ namespace Pidgin.Tests
         private static void AlignedChunkTest(int inputLength)
         {
             var input = ('f' + new string('o', inputLength - 1));
-            var state = new ParseState<char>(CharDefaultConfiguration.Instance, ToStream(input));
+            var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, ToStream(input), Unit.Value);
 
             state.PushBookmark();
 
@@ -165,7 +165,7 @@ namespace Pidgin.Tests
         private static void UnalignedChunkTest(int inputLength)
         {
             var input = ("fa" + new string('o', inputLength - 2));
-            var state = new ParseState<char>(CharDefaultConfiguration.Instance, ToStream(input));
+            var state = new ParseState<char, Unit>(CharDefaultConfiguration.Instance, ToStream(input), Unit.Value);
 
             Consume('f', ref state);
 
@@ -179,7 +179,7 @@ namespace Pidgin.Tests
             Consume('a', ref state);
         }
 
-        private static void Consume(char expected, ref ParseState<char> state)
+        private static void Consume(char expected, ref ParseState<char, Unit> state)
         {
             var oldCols = state.ComputeSourcePosDelta().Cols;
             Assert.True(state.HasCurrent);
@@ -188,7 +188,7 @@ namespace Pidgin.Tests
             Assert.Equal(oldCols + 1, state.ComputeSourcePosDelta().Cols);
         }
 
-        private static void Consume(string expected, ref ParseState<char> state)
+        private static void Consume(string expected, ref ParseState<char, Unit> state)
         {
             var oldCols = state.ComputeSourcePosDelta().Cols;
             AssertEqual(expected.AsSpan(), state.LookAhead(expected.Length));

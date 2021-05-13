@@ -7,14 +7,14 @@ using System.Linq;
 
 namespace Pidgin
 {
-    public static partial class Parser
+    public static partial class Parser<TUser>
     {
         /// <summary>
         /// Creates a parser which parses and returns one of the specified characters.
         /// </summary>
         /// <param name="chars">A sequence of characters to choose between</param>
         /// <returns>A parser which parses and returns one of the specified characters</returns>
-        public static Parser<char, char> OneOf(params char[] chars)
+        public static Parser<char, TUser, char> OneOf(params char[] chars)
         {
             if (chars == null)
             {
@@ -28,14 +28,14 @@ namespace Pidgin
         /// </summary>
         /// <param name="chars">A sequence of characters to choose between</param>
         /// <returns>A parser which parses and returns one of the specified characters</returns>
-        public static Parser<char, char> OneOf(IEnumerable<char> chars)
+        public static Parser<char, TUser, char> OneOf(IEnumerable<char> chars)
         {
             if (chars == null)
             {
                 throw new ArgumentNullException(nameof(chars));
             }
             var cs = chars.ToArray();
-            return Parser<char>
+            return Parser<char, TUser>
                 .Token(c => Array.IndexOf(cs, c) != -1)
                 .WithExpected(cs.Select(c => new Expected<char>(ImmutableArray.Create(c))).ToImmutableArray());
         }
@@ -46,7 +46,7 @@ namespace Pidgin
         /// </summary>
         /// <param name="chars">A sequence of characters to choose between</param>
         /// <returns>A parser which parses and returns one of the specified characters, in a case insensitive manner.</returns>
-        public static Parser<char, char> CIOneOf(params char[] chars)
+        public static Parser<char, TUser, char> CIOneOf(params char[] chars)
         {
             if (chars == null)
             {
@@ -61,7 +61,7 @@ namespace Pidgin
         /// </summary>
         /// <param name="chars">A sequence of characters to choose between</param>
         /// <returns>A parser which parses and returns one of the specified characters, in a case insensitive manner.</returns>
-        public static Parser<char, char> CIOneOf(IEnumerable<char> chars)
+        public static Parser<char, TUser, char> CIOneOf(IEnumerable<char> chars)
         {
             if (chars == null)
             {
@@ -74,7 +74,7 @@ namespace Pidgin
                 builder.Add(new Expected<char>(ImmutableArray.Create(char.ToLowerInvariant(c))));
                 builder.Add(new Expected<char>(ImmutableArray.Create(char.ToUpperInvariant(c))));
             }
-            return Parser<char>
+            return Parser<char, TUser>
                 .Token(c => Array.IndexOf(cs, char.ToLowerInvariant(c)) != -1)
                 .WithExpected(builder.MoveToImmutable());
         }
@@ -87,7 +87,7 @@ namespace Pidgin
         /// <typeparam name="T">The return type of the parsers</typeparam>
         /// <param name="parsers">A sequence of parsers to choose between</param>
         /// <returns>A parser which applies one of the specified parsers</returns>
-        public static Parser<TToken, T> OneOf<TToken, T>(params Parser<TToken, T>[] parsers)
+        public static Parser<TToken, TUser, T> OneOf<TToken, T>(params Parser<TToken, TUser, T>[] parsers)
         {
             if (parsers == null)
             {
@@ -105,27 +105,87 @@ namespace Pidgin
         /// <typeparam name="T">The return type of the parsers</typeparam>
         /// <param name="parsers">A sequence of parsers to choose between</param>
         /// <returns>A parser which applies one of the specified parsers</returns>
-        public static Parser<TToken, T> OneOf<TToken, T>(IEnumerable<Parser<TToken, T>> parsers)
+        public static Parser<TToken, TUser, T> OneOf<TToken, T>(IEnumerable<Parser<TToken, TUser, T>> parsers)
         {
             if (parsers == null)
             {
                 throw new ArgumentNullException(nameof(parsers));
             }
-            return OneOfParser<TToken, T>.Create(parsers);
+            return OneOfParser<TToken, TUser, T>.Create(parsers);
         }
     }
 
-    internal sealed class OneOfParser<TToken, T> : Parser<TToken, T>
+    public static partial class Parser
     {
-        private readonly Parser<TToken, T>[] _parsers;
+        /// <summary>
+        /// Creates a parser which parses and returns one of the specified characters.
+        /// </summary>
+        /// <param name="chars">A sequence of characters to choose between</param>
+        /// <returns>A parser which parses and returns one of the specified characters</returns>
+        public static Parser<char, Unit, char> OneOf(params char[] chars)
+            => Parser<Unit>.OneOf(chars);
 
-        private OneOfParser(Parser<TToken, T>[] parsers)
+        /// <summary>
+        /// Creates a parser which parses and returns one of the specified characters.
+        /// </summary>
+        /// <param name="chars">A sequence of characters to choose between</param>
+        /// <returns>A parser which parses and returns one of the specified characters</returns>
+        public static Parser<char, Unit, char> OneOf(IEnumerable<char> chars)
+            => Parser<Unit>.OneOf(chars);
+
+        /// <summary>
+        /// Creates a parser which parses and returns one of the specified characters, in a case insensitive manner.
+        /// The parser returns the actual character parsed.
+        /// </summary>
+        /// <param name="chars">A sequence of characters to choose between</param>
+        /// <returns>A parser which parses and returns one of the specified characters, in a case insensitive manner.</returns>
+        public static Parser<char, Unit, char> CIOneOf(params char[] chars)
+            => Parser<Unit>.CIOneOf(chars);
+
+        /// <summary>
+        /// Creates a parser which parses and returns one of the specified characters, in a case insensitive manner.
+        /// The parser returns the actual character parsed.
+        /// </summary>
+        /// <param name="chars">A sequence of characters to choose between</param>
+        /// <returns>A parser which parses and returns one of the specified characters, in a case insensitive manner.</returns>
+        public static Parser<char, Unit, char> CIOneOf(IEnumerable<char> chars)
+            => Parser<Unit>.CIOneOf(chars);
+
+        /// <summary>
+        /// Creates a parser which applies one of the specified parsers.
+        /// The resulting parser fails if all of the input parsers fail without consuming input, or if one of them fails after consuming input
+        /// </summary>
+        /// <typeparam name="TToken">The type of tokens in the parsers' input stream</typeparam>
+        /// <typeparam name="T">The return type of the parsers</typeparam>
+        /// <param name="parsers">A sequence of parsers to choose between</param>
+        /// <returns>A parser which applies one of the specified parsers</returns>
+        public static Parser<TToken, Unit, T> OneOf<TToken, T>(params Parser<TToken, Unit, T>[] parsers)
+            => Parser<Unit>.OneOf(parsers);
+
+        /// <summary>
+        /// Creates a parser which applies one of the specified parsers.
+        /// The resulting parser fails if all of the input parsers fail without consuming input, or if one of them fails after consuming input.
+        /// The input enumerable is enumerated and copied to a list.
+        /// </summary>
+        /// <typeparam name="TToken">The type of tokens in the parsers' input stream</typeparam>
+        /// <typeparam name="T">The return type of the parsers</typeparam>
+        /// <param name="parsers">A sequence of parsers to choose between</param>
+        /// <returns>A parser which applies one of the specified parsers</returns>
+        public static Parser<TToken, Unit, T> OneOf<TToken, T>(IEnumerable<Parser<TToken, Unit, T>> parsers)
+            => Parser<Unit>.OneOf(parsers);
+    }
+
+    internal sealed class OneOfParser<TToken, TUser, T> : Parser<TToken, TUser, T>
+    {
+        private readonly Parser<TToken, TUser, T>[] _parsers;
+
+        private OneOfParser(Parser<TToken, TUser, T>[] parsers)
         {
             _parsers = parsers;
         }
 
         // see comment about expecteds in ParseState.Error.cs
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
         {
             var firstTime = true;
             var err = new InternalError<TToken>(
@@ -180,13 +240,13 @@ namespace Pidgin
             return false;
         }
 
-        internal static OneOfParser<TToken, T> Create(IEnumerable<Parser<TToken, T>> parsers)
+        internal static OneOfParser<TToken, TUser, T> Create(IEnumerable<Parser<TToken, TUser, T>> parsers)
         {
             // if we know the length of the collection,
             // we know we're going to need at least that much room in the list
-            var list = parsers is ICollection<Parser<TToken, T>> coll
-                ? new List<Parser<TToken, T>>(coll.Count)
-                : new List<Parser<TToken, T>>();
+            var list = parsers is ICollection<Parser<TToken, TUser, T>> coll
+                ? new List<Parser<TToken, TUser, T>>(coll.Count)
+                : new List<Parser<TToken, TUser, T>>();
             
             foreach (var p in parsers)
             {
@@ -194,7 +254,7 @@ namespace Pidgin
                 {
                     throw new ArgumentNullException(nameof(parsers));
                 }
-                if (p is OneOfParser<TToken, T> o)
+                if (p is OneOfParser<TToken, TUser, T> o)
                 {
                     list.AddRange(o._parsers);
                 }
@@ -203,7 +263,7 @@ namespace Pidgin
                     list.Add(p);
                 }
             }
-            return new OneOfParser<TToken, T>(list.ToArray());
+            return new OneOfParser<TToken, TUser, T>(list.ToArray());
         }
     }
 }

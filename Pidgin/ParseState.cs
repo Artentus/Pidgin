@@ -18,8 +18,9 @@ namespace Pidgin
     /// and subject to change in future versions of the library.
     /// </summary>
     /// <typeparam name="TToken">The type of tokens consumed by the parser.</typeparam>
+    /// <typeparam name="TUser">The type of the user state</typeparam>
     [StructLayout(LayoutKind.Auto)]
-    public ref partial struct ParseState<TToken>
+    public ref partial struct ParseState<TToken, TUser>
     {
         private static readonly bool _needsClear = RuntimeHelpers.IsReferenceOrContainsReferences<TToken>();
 
@@ -44,7 +45,7 @@ namespace Pidgin
         // because dropping the buffer's prefix would invalidate the bookmarks
         private PooledList<int> _bookmarks;
 
-        internal ParseState(IConfiguration<TToken> configuration, ReadOnlySpan<TToken> span)
+        internal ParseState(IConfiguration<TToken> configuration, ReadOnlySpan<TToken> span, TUser userState)
         {
             Configuration = configuration;
             _sourcePosCalculator = Configuration.SourcePosCalculator;
@@ -62,13 +63,15 @@ namespace Pidgin
             _lastSourcePosDeltaLocation = 0;
             _lastSourcePosDelta = SourcePosDelta.Zero;
 
+            UserState = userState;
+
             _eof = default;
             _unexpected = default;
             ErrorLocation = default;
             _message = default;
         }
 
-        internal ParseState(IConfiguration<TToken> configuration, ITokenStream<TToken> stream)
+        internal ParseState(IConfiguration<TToken> configuration, ITokenStream<TToken> stream, TUser userState)
         {
             Configuration = configuration;
             _sourcePosCalculator = Configuration.SourcePosCalculator;
@@ -86,6 +89,8 @@ namespace Pidgin
             _lastSourcePosDeltaLocation = 0;
             _lastSourcePosDelta = SourcePosDelta.Zero;
 
+            UserState = userState;
+
             _eof = default;
             _unexpected = default;
             ErrorLocation = default;
@@ -93,6 +98,11 @@ namespace Pidgin
 
             Buffer(0);
         }
+
+        /// <summary>
+        /// Gets or sets the user state
+        /// </summary>
+        public TUser UserState { get; set; }
 
         /// <summary>
         /// Returns the total number of tokens which have been consumed.

@@ -2,7 +2,7 @@ using System;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser that applies the specified parser both before and after applying the current parser.
@@ -11,7 +11,7 @@ namespace Pidgin
         /// <param name="parser">The parser to apply before and after applying the current parser</param>
         /// <typeparam name="U">The type of the value returned by the bracketing parser</typeparam>
         /// <returns>A parser that applies the specified parser before and after applying the current parser</returns>
-        public Parser<TToken, T> Between<U>(Parser<TToken, U> parser)
+        public Parser<TToken, TUser, T> Between<U>(Parser<TToken, TUser, U> parser)
         {
             if (parser == null)
             {
@@ -29,7 +29,7 @@ namespace Pidgin
         /// <typeparam name="U">The type of the value returned by the first parser</typeparam>
         /// <typeparam name="V">The type of the value returned by the second parser</typeparam>
         /// <returns>A parser that applies the specified parsers before and after applying the current parser</returns>
-        public Parser<TToken, T> Between<U, V>(Parser<TToken, U> parser1, Parser<TToken, V> parser2)
+        public Parser<TToken, TUser, T> Between<U, V>(Parser<TToken, TUser, U> parser1, Parser<TToken, TUser, V> parser2)
         {
             if (parser1 == null)
             {
@@ -39,7 +39,7 @@ namespace Pidgin
             {
                 throw new ArgumentNullException(nameof(parser2));
             }
-            return Parser.Map((u, t, v) => t, parser1, this, parser2);
+            return Parser<TUser>.Map((u, t, v) => t, parser1, this, parser2);
         }
     }
 }

@@ -3,20 +3,20 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public static partial class Parser
+    public static partial class Parser<TUser>
     {
         /// <summary>
         /// Creates a parser which lazily calls the supplied function and applies the resulting parser.
         /// This is primarily useful to allow mutual recursion in parsers.
-        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, T}})"/>
-        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, T},Parser{TToken, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, TUser, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, TUser, T},Parser{TToken, TUser, T}})"/>
         /// </summary>
         /// <param name="parser">A function which returns a parser</param>
         /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
         /// <typeparam name="T">The return type of the parser</typeparam>
         /// <returns>A parser which lazily calls the supplied function and applies the resulting parser</returns>
         /// <example>
-        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, T}.Many()"/>
+        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, TUser, T}.Many()"/>
         /// <code>
         /// // many is equivalent to String("foo").Separated(Char(' '))
         /// Parser&lt;char, string&gt; rest = null;
@@ -24,27 +24,27 @@ namespace Pidgin
         /// rest = Char(' ').Then(many);
         /// </code>
         /// </example>
-        public static Parser<TToken, T> Rec<TToken, T>(Func<Parser<TToken, T>> parser)
+        public static Parser<TToken, TUser, T> Rec<TToken, T>(Func<Parser<TToken, TUser, T>> parser)
         {
             if (parser == null)
             {
                 throw new ArgumentNullException(nameof(parser));
             }
-            return Rec(new Lazy<Parser<TToken, T>>(parser));
+            return Rec(new Lazy<Parser<TToken, TUser, T>>(parser));
         }
 
         /// <summary>
         /// Creates a parser which passes itself to the supplied function and applies the resulting parser.
         /// This is the Y combinator for parsers.
-        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, T}})"/>
-        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, TUser, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, TUser, T}})"/>
         /// </summary>
         /// <param name="func">A function whose argument is a parser which behaves the same way as its result</param>
         /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
         /// <typeparam name="T">The return type of the parser</typeparam>
         /// <returns>A parser which lazily calls the supplied function and applies the resulting parser</returns>
         /// <example>
-        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, T}.Many()"/>
+        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, TUser, T}.Many()"/>
         /// <code>
         /// // many is equivalent to String("foo").Separated(Char(' '))
         /// var many = Rec(self =>
@@ -55,13 +55,13 @@ namespace Pidgin
         /// );
         /// </code>
         /// </example>
-        public static Parser<TToken, T> Rec<TToken, T>(Func<Parser<TToken, T>, Parser<TToken, T>> func)
+        public static Parser<TToken, TUser, T> Rec<TToken, T>(Func<Parser<TToken, TUser, T>, Parser<TToken, TUser, T>> func)
         {
             if (func == null)
             {
                 throw new ArgumentNullException(nameof(func));
             }
-            Parser<TToken, T> result = null!;
+            Parser<TToken, TUser, T> result = null!;
             result = Rec(() => func(result));
             return result;
         }
@@ -69,33 +69,96 @@ namespace Pidgin
         /// <summary>
         /// Creates a parser which lazily calls the supplied function and applies the resulting parser.
         /// This is primarily useful to allow mutual recursion in parsers.
-        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, T}})"/>
-        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, T},Parser{TToken, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, TUser, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, TUser, T},Parser{TToken, TUser, T}})"/>
         /// </summary>
         /// <param name="parser">A lazy parser value</param>
         /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
         /// <typeparam name="T">The return type of the parser</typeparam>
         /// <returns>A parser which lazily applies the specified parser</returns>
-        public static Parser<TToken, T> Rec<TToken, T>(Lazy<Parser<TToken, T>> parser)
+        public static Parser<TToken, TUser, T> Rec<TToken, T>(Lazy<Parser<TToken, TUser, T>> parser)
         {
             if (parser == null)
             {
                 throw new ArgumentNullException(nameof(parser));
             }
-            return new RecParser<TToken, T>(parser);
+            return new RecParser<TToken, TUser, T>(parser);
         }
     }
-        
-    internal sealed class RecParser<TToken, T> : Parser<TToken, T>
-    {
-        private readonly Lazy<Parser<TToken, T>> _lazy;
 
-        public RecParser(Lazy<Parser<TToken, T>> lazy)
+    public static partial class Parser
+    {
+        /// <summary>
+        /// Creates a parser which lazily calls the supplied function and applies the resulting parser.
+        /// This is primarily useful to allow mutual recursion in parsers.
+        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, Unit, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, Unit, T},Parser{TToken, Unit, T}})"/>
+        /// </summary>
+        /// <param name="parser">A function which returns a parser</param>
+        /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
+        /// <typeparam name="T">The return type of the parser</typeparam>
+        /// <returns>A parser which lazily calls the supplied function and applies the resulting parser</returns>
+        /// <example>
+        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, TUser, T}.Many()"/>
+        /// <code>
+        /// // many is equivalent to String("foo").Separated(Char(' '))
+        /// Parser&lt;char, string&gt; rest = null;
+        /// var many = String("foo").Then(Rec(() => rest).Optional(), (x, y) => x + y.GetValueOrDefault(""));
+        /// rest = Char(' ').Then(many);
+        /// </code>
+        /// </example>
+        public static Parser<TToken, Unit, T> Rec<TToken, T>(Func<Parser<TToken, Unit, T>> parser)
+            => Parser<Unit>.Rec(parser);
+
+        /// <summary>
+        /// Creates a parser which passes itself to the supplied function and applies the resulting parser.
+        /// This is the Y combinator for parsers.
+        /// <seealso cref="Rec{TToken,T}(Lazy{Parser{TToken, Unit, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, Unit, T}})"/>
+        /// </summary>
+        /// <param name="func">A function whose argument is a parser which behaves the same way as its result</param>
+        /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
+        /// <typeparam name="T">The return type of the parser</typeparam>
+        /// <returns>A parser which lazily calls the supplied function and applies the resulting parser</returns>
+        /// <example>
+        /// This example shows how to use mutual recursion to create a parser equivalent to <see cref="Parser{TToken, TUser, T}.Many()"/>
+        /// <code>
+        /// // many is equivalent to String("foo").Separated(Char(' '))
+        /// var many = Rec(self =>
+        ///     String("foo").Then(
+        ///         Char(' ').Then(self).Optional(),
+        ///         (x, y) => x + y.GetValueOrDefault("")
+        ///     )
+        /// );
+        /// </code>
+        /// </example>
+        public static Parser<TToken, Unit, T> Rec<TToken, T>(Func<Parser<TToken, Unit, T>, Parser<TToken, Unit, T>> func)
+            => Parser<Unit>.Rec(func);
+
+        /// <summary>
+        /// Creates a parser which lazily calls the supplied function and applies the resulting parser.
+        /// This is primarily useful to allow mutual recursion in parsers.
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, Unit, T}})"/>
+        /// <seealso cref="Rec{TToken,T}(Func{Parser{TToken, Unit, T},Parser{TToken, Unit, T}})"/>
+        /// </summary>
+        /// <param name="parser">A lazy parser value</param>
+        /// <typeparam name="TToken">The type of tokens in the parser's input stream</typeparam>
+        /// <typeparam name="T">The return type of the parser</typeparam>
+        /// <returns>A parser which lazily applies the specified parser</returns>
+        public static Parser<TToken, Unit, T> Rec<TToken, T>(Lazy<Parser<TToken, Unit, T>> parser)
+            => Parser<Unit>.Rec(parser);
+    }
+
+    internal sealed class RecParser<TToken, TUser, T> : Parser<TToken, TUser, T>
+    {
+        private readonly Lazy<Parser<TToken, TUser, T>> _lazy;
+
+        public RecParser(Lazy<Parser<TToken, TUser, T>> lazy)
         {
             _lazy = lazy;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
             => _lazy.Value.TryParse(ref state, ref expecteds, out result);
     }
 }

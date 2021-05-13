@@ -4,7 +4,7 @@ using System.Linq;
 using Pidgin.Expression;
 using Xunit;
 using static Pidgin.Parser;
-using static Pidgin.Parser<char>;
+using static Pidgin.Parser<char, Pidgin.Unit>;
 
 namespace Pidgin.Tests
 {

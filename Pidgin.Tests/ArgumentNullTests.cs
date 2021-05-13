@@ -28,12 +28,20 @@ namespace Pidgin.Tests
             Assert.Throws<ArgumentNullException>(paramName, () => InvokeStaticMethod(method, args));
         }
         [Theory]
+        [MemberData(nameof(GetDoubleGenericStaticClassParserMethods))]
+        public void TestNullArgumentsOnDoubleGenericStaticClassParser(MethodInfo method, object[] args)
+        {
+            Assert.Single(args.Where(x => x == null));
+            var paramName = method.GetParameters()[Array.FindIndex(args, x => x == null)].Name;
+            Assert.Throws<ArgumentNullException>(paramName, () => InvokeStaticMethod(method, args));
+        }
+        [Theory]
         [MemberData(nameof(GetClassParserMethods))]
         public void TestNullArgumentsOnClassParser(MethodInfo method, object[] args)
         {
             Assert.Single(args.Where(x => x == null));
             var paramName = method.GetParameters()[Array.FindIndex(args, x => x == null)].Name;
-            Assert.Throws<ArgumentNullException>(paramName, () => InvokeMethod(new AParser<int, int>(), method, args));
+            Assert.Throws<ArgumentNullException>(paramName, () => InvokeMethod(new AParser<int, int, int>(), method, args));
         }
 
         private void InvokeStaticMethod(MethodInfo method, object[] args)
@@ -68,6 +76,18 @@ namespace Pidgin.Tests
             from m in typeof(Parser<int>).GetMethods(BindingFlags.Public | BindingFlags.Static)
             let ps = m.GetParameters()
             where ps.Any()
+            from args in GetArgs(ps)
+            select new object[]
+            {
+                m.IsGenericMethod
+                    ? m.MakeGenericMethod(m.GetGenericArguments().Select(_ => typeof(int)).ToArray())
+                    : m,
+                args
+            };
+        public static IEnumerable<object[]> GetDoubleGenericStaticClassParserMethods() =>
+            from m in typeof(Parser<int, int>).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            let ps = m.GetParameters()
+            where ps.Any()
             where m.Name != "Sequence"  // todo
                 && m.Name != "Return"
                 && m.Name != "FromResult"
@@ -80,7 +100,7 @@ namespace Pidgin.Tests
                 args
             };
         public static IEnumerable<object[]> GetClassParserMethods() =>
-            from m in typeof(Parser<int, int>).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            from m in typeof(Parser<int, int, int>).GetMethods(BindingFlags.Public | BindingFlags.Instance)
             let ps = m.GetParameters()
             where ps.Any()
             where !new[]{ "TryParse", "Equals", "WithResult", "ThenReturn" }.Contains(m.Name)
@@ -128,7 +148,7 @@ namespace Pidgin.Tests
                 var genericArgs = parserArgs
                     .Select(a => a.IsGenericParameter ? typeof(int) : a)
                     .ToArray();
-                return Maybe.Just(Activator.CreateInstance(typeof(AParser<,>).MakeGenericType(genericArgs)));
+                return Maybe.Just(Activator.CreateInstance(typeof(AParser<,,>).MakeGenericType(genericArgs)));
             }
             var funcArgs = GetFuncArgs(parameterType);
             if (funcArgs != null)
@@ -150,7 +170,7 @@ namespace Pidgin.Tests
 
         private static Type[]? GetParserArgs(Type type)
         {
-            if (type.IsConstructedGenericType && type.GetGenericTypeDefinition().Equals(typeof(Parser<,>)))
+            if (type.IsConstructedGenericType && type.GetGenericTypeDefinition().Equals(typeof(Parser<,,>)))
             {
                 return type.GenericTypeArguments;
             }
@@ -172,11 +192,11 @@ namespace Pidgin.Tests
         }
 
 
-        private class AParser<TToken, T> : Parser<TToken, T>
+        private class AParser<TToken, TUser, T> : Parser<TToken, TUser, T>
         {
             public AParser() { }
 
-            public override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, out T result)
+            public override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, out T result)
             {
                 throw new NotImplementedException();
             }

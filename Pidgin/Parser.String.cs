@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public static partial class Parser
+    public static partial class Parser<TUser>
     {
         /// <summary>
         /// Creates a parser that parses and returns a literal string
@@ -12,13 +12,13 @@ namespace Pidgin
         /// <param name="str">The string to parse</param>
         /// <returns>A parser that parses and returns a literal string</returns>
         /// 
-        public static Parser<char, string> String(string str)
+        public static Parser<char, TUser, string> String(string str)
         {
             if (str == null)
             {
                 throw new ArgumentNullException(nameof(str));
             }
-            return Parser<char>.Sequence<string>(str);
+            return Parser<char, TUser>.Sequence(str);
         }
         
         /// <summary>
@@ -27,17 +27,38 @@ namespace Pidgin
         /// </summary>
         /// <param name="str">The string to parse</param>
         /// <returns>A parser that parses and returns a literal string, in a case insensitive manner.</returns>
-        public static Parser<char, string> CIString(string str)
+        public static Parser<char, TUser, string> CIString(string str)
         {
             if (str == null)
             {
                 throw new ArgumentNullException(nameof(str));
             }
-            return new CIStringParser(str);
+            return new CIStringParser<TUser>(str);
         }
     }
-    
-    internal sealed class CIStringParser : Parser<char, string>
+
+    public static partial class Parser
+    {
+        /// <summary>
+        /// Creates a parser that parses and returns a literal string
+        /// </summary>
+        /// <param name="str">The string to parse</param>
+        /// <returns>A parser that parses and returns a literal string</returns>
+        /// 
+        public static Parser<char, Unit, string> String(string str)
+            => Parser<Unit>.String(str);
+
+        /// <summary>
+        /// Creates a parser that parses and returns a literal string, in a case insensitive manner.
+        /// The parser returns the actual string parsed.
+        /// </summary>
+        /// <param name="str">The string to parse</param>
+        /// <returns>A parser that parses and returns a literal string, in a case insensitive manner.</returns>
+        public static Parser<char, Unit, string> CIString(string str)
+            => Parser<Unit>.CIString(str);
+    }
+
+    internal sealed class CIStringParser<TUser> : Parser<char, TUser, string>
     {
         private readonly string _value;
         private Expected<char> _expected;
@@ -58,7 +79,7 @@ namespace Pidgin
             _value = value;
         }
 
-        public sealed override bool TryParse(ref ParseState<char> state, ref PooledList<Expected<char>> expecteds, [MaybeNullWhen(false)] out string result)
+        public sealed override bool TryParse(ref ParseState<char, TUser> state, ref PooledList<Expected<char>> expecteds, [MaybeNullWhen(false)] out string result)
         {
             var span = state.LookAhead(_value.Length);  // span.Length <= _valueTokens.Length
 

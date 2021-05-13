@@ -2,7 +2,7 @@ using System;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser that applies the current parser followed by the specified parser.
@@ -11,7 +11,7 @@ namespace Pidgin
         /// <param name="parser">The parser to apply after applying the current parser.</param>
         /// <typeparam name="U">The type of the value returned by the second parser</typeparam>
         /// <returns>A parser that applies the current parser followed by the specified parser</returns>
-        public Parser<TToken, T> Before<U>(Parser<TToken, U> parser)
+        public Parser<TToken, TUser, T> Before<U>(Parser<TToken, TUser, U> parser)
         {
             if (parser == null)
             {

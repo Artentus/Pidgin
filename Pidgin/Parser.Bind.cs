@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser that applies a transformation function to the return value of the current parser.
@@ -12,7 +12,7 @@ namespace Pidgin
         /// <param name="selector">A transformation function which returns a parser to apply after applying the current parser</param>
         /// <typeparam name="U">The type of the return value of the second parser</typeparam>
         /// <returns>A parser which applies the current parser before applying the result of the <paramref name="selector"/> function.</returns>
-        public Parser<TToken, U> Bind<U>(Func<T, Parser<TToken, U>> selector)
+        public Parser<TToken, TUser, U> Bind<U>(Func<T, Parser<TToken, TUser, U>> selector)
         {
             if (selector == null)
             {
@@ -30,7 +30,7 @@ namespace Pidgin
         /// <typeparam name="U">The type of the return value of the second parser</typeparam>
         /// <typeparam name="R">The type of the return value of the resulting parser</typeparam>
         /// <returns>A parser which applies the current parser before applying the result of the <paramref name="selector"/> function</returns>
-        public Parser<TToken, R> Bind<U, R>(Func<T, Parser<TToken, U>> selector, Func<T, U, R> result)
+        public Parser<TToken, TUser, R> Bind<U, R>(Func<T, Parser<TToken, TUser, U>> selector, Func<T, U, R> result)
         {
             if (selector == null)
             {
@@ -40,24 +40,24 @@ namespace Pidgin
             {
                 throw new ArgumentNullException(nameof(result));
             }
-            return new BindParser<TToken, T, U, R>(this, selector, result);
+            return new BindParser<TToken, TUser, T, U, R>(this, selector, result);
         }
     }
 
-    internal sealed class BindParser<TToken, T, U, R> : Parser<TToken, R>
+    internal sealed class BindParser<TToken, TUser, T, U, R> : Parser<TToken, TUser, R>
     {
-        private readonly Parser<TToken, T> _parser;
-        private readonly Func<T, Parser<TToken, U>> _func;
+        private readonly Parser<TToken, TUser, T> _parser;
+        private readonly Func<T, Parser<TToken, TUser, U>> _func;
         private readonly Func<T, U, R> _result;
 
-        public BindParser(Parser<TToken, T> parser, Func<T, Parser<TToken, U>> func, Func<T, U, R> result)
+        public BindParser(Parser<TToken, TUser, T> parser, Func<T, Parser<TToken, TUser, U>> func, Func<T, U, R> result)
         {
             _parser = parser;
             _func = func;
             _result = result;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out R result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out R result)
         {
             var success = _parser.TryParse(ref state, ref expecteds, out var childResult);
             if (!success)

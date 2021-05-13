@@ -3,7 +3,7 @@ using System.Linq;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using Pidgin.Expression;
-using static Pidgin.Parser<char>;
+using static Pidgin.Parser<char, Pidgin.Unit>;
 
 namespace Pidgin.Bench
 {
@@ -13,8 +13,8 @@ namespace Pidgin.Bench
     {
         #nullable disable
         private string _bigExpression;
-        private Parser<char, int> _leftAssoc;
-        private Parser<char, int> _rightAssoc;
+        private Parser<char, Unit, int> _leftAssoc;
+        private Parser<char, Unit, int> _rightAssoc;
         #nullable restore
 
         [GlobalSetup]

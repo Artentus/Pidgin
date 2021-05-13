@@ -8,33 +8,33 @@ namespace Pidgin.Expression
     /// Represents a row in a table of operators.
     /// Contains a collection of parsers for operators at a single precendence level.
     /// </summary>
-    public sealed class OperatorTableRow<TToken, T>
+    public sealed class OperatorTableRow<TToken, TUser, T>
     {
         /// <summary>
         /// A collection of parsers for the non-associative infix operators at this precedence level
         /// </summary>
         /// <returns>A collection of parsers for the non-associative infix operators at this precedence level</returns>
-        public IEnumerable<Parser<TToken, Func<T, T, T>>> InfixNOps { get; }
+        public IEnumerable<Parser<TToken, TUser, Func<T, T, T>>> InfixNOps { get; }
         /// <summary>
         /// A collection of parsers for the left-associative infix operators at this precedence level
         /// </summary>
         /// <returns>A collection of parsers for the left-associative infix operators at this precedence level</returns>
-        public IEnumerable<Parser<TToken, Func<T, T, T>>> InfixLOps { get; }
+        public IEnumerable<Parser<TToken, TUser, Func<T, T, T>>> InfixLOps { get; }
         /// <summary>
         /// A collection of parsers for the right-associative infix operators at this precedence level
         /// </summary>
         /// <returns>A collection of parsers for the right-associative infix operators at this precedence level</returns>
-        public IEnumerable<Parser<TToken, Func<T, T, T>>> InfixROps { get; }
+        public IEnumerable<Parser<TToken, TUser, Func<T, T, T>>> InfixROps { get; }
         /// <summary>
         /// A collection of parsers for the prefix operators at this precedence level
         /// </summary>
         /// <returns>A collection of parsers for the prefix operators at this precedence level</returns>
-        public IEnumerable<Parser<TToken, Func<T, T>>> PrefixOps { get; }
+        public IEnumerable<Parser<TToken, TUser, Func<T, T>>> PrefixOps { get; }
         /// <summary>
         /// A collection of parsers for the postfix operators at this precedence level
         /// </summary>
         /// <returns>A collection of parsers for the postfix operators at this precedence level</returns>
-        public IEnumerable<Parser<TToken, Func<T, T>>> PostfixOps { get; }
+        public IEnumerable<Parser<TToken, TUser, Func<T, T>>> PostfixOps { get; }
 
         /// <summary>
         /// Creates a row in a table of operators containing a collection of parsers for operators at a single precedence level.
@@ -45,34 +45,34 @@ namespace Pidgin.Expression
         /// <param name="prefixOps">A collection of parsers for the prefix operators at this precedence level</param>
         /// <param name="postfixOps">A collection of parsers for the postfix operators at this precedence level</param>
         public OperatorTableRow(
-            IEnumerable<Parser<TToken, Func<T, T, T>>>? infixNOps,
-            IEnumerable<Parser<TToken, Func<T, T, T>>>? infixLOps,
-            IEnumerable<Parser<TToken, Func<T, T, T>>>? infixROps,
-            IEnumerable<Parser<TToken, Func<T, T>>>? prefixOps,
-            IEnumerable<Parser<TToken, Func<T, T>>>? postfixOps
+            IEnumerable<Parser<TToken, TUser, Func<T, T, T>>>? infixNOps,
+            IEnumerable<Parser<TToken, TUser, Func<T, T, T>>>? infixLOps,
+            IEnumerable<Parser<TToken, TUser, Func<T, T, T>>>? infixROps,
+            IEnumerable<Parser<TToken, TUser, Func<T, T>>>? prefixOps,
+            IEnumerable<Parser<TToken, TUser, Func<T, T>>>? postfixOps
         )
         {
-            InfixNOps = infixNOps ?? Enumerable.Empty<Parser<TToken, Func<T, T, T>>>();
-            InfixLOps = infixLOps ?? Enumerable.Empty<Parser<TToken, Func<T, T, T>>>();
-            InfixROps = infixROps ?? Enumerable.Empty<Parser<TToken, Func<T, T, T>>>();
-            PrefixOps = prefixOps ?? Enumerable.Empty<Parser<TToken, Func<T, T>>>();
-            PostfixOps = postfixOps ?? Enumerable.Empty<Parser<TToken, Func<T, T>>>();
+            InfixNOps = infixNOps ?? Enumerable.Empty<Parser<TToken, TUser, Func<T, T, T>>>();
+            InfixLOps = infixLOps ?? Enumerable.Empty<Parser<TToken, TUser, Func<T, T, T>>>();
+            InfixROps = infixROps ?? Enumerable.Empty<Parser<TToken, TUser, Func<T, T, T>>>();
+            PrefixOps = prefixOps ?? Enumerable.Empty<Parser<TToken, TUser, Func<T, T>>>();
+            PostfixOps = postfixOps ?? Enumerable.Empty<Parser<TToken, TUser, Func<T, T>>>();
         }
 
         /// <summary>
         /// An empty row in a table of operators
         /// </summary>
         /// <returns>An empty row in a table of operators</returns>
-        public static OperatorTableRow<TToken, T> Empty { get; }
-            = new OperatorTableRow<TToken, T>(null, null, null, null, null);
+        public static OperatorTableRow<TToken, TUser, T> Empty { get; }
+            = new OperatorTableRow<TToken, TUser, T>(null, null, null, null, null);
         
         /// <summary>
         /// Combine two rows at the same precedence level
         /// </summary>
         /// <param name="otherRow">A collection of parsers for operators</param>
         /// <returns>The current collection of parsers combined with <paramref name="otherRow"/></returns>
-        public OperatorTableRow<TToken, T> And(OperatorTableRow<TToken, T> otherRow)
-            => new OperatorTableRow<TToken, T>(
+        public OperatorTableRow<TToken, TUser, T> And(OperatorTableRow<TToken, TUser, T> otherRow)
+            => new OperatorTableRow<TToken, TUser, T>(
                 InfixNOps.Concat(otherRow.InfixNOps),
                 InfixLOps.Concat(otherRow.InfixLOps),
                 InfixROps.Concat(otherRow.InfixROps),

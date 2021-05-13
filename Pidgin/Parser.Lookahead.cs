@@ -12,26 +12,26 @@ namespace Pidgin
         /// </summary>
         /// <param name="parser">The parser to look ahead with</param>
         /// <returns>A parser which rewinds the input stream if <paramref name="parser"/> succeeds.</returns>
-        public static Parser<TToken, T> Lookahead<TToken, T>(Parser<TToken, T> parser)
+        public static Parser<TToken, TUser, T> Lookahead<TToken, TUser, T>(Parser<TToken, TUser, T> parser)
         {
             if (parser == null)
             {
                 throw new ArgumentNullException(nameof(parser));
             }
-            return new LookaheadParser<TToken, T>(parser);
+            return new LookaheadParser<TToken, TUser, T>(parser);
         }
     }
 
-    internal sealed class LookaheadParser<TToken, T> : Parser<TToken, T>
+    internal sealed class LookaheadParser<TToken, TUser, T> : Parser<TToken, TUser, T>
     {
-        private readonly Parser<TToken, T> _parser;
+        private readonly Parser<TToken, TUser, T> _parser;
 
-        public LookaheadParser(Parser<TToken, T> parser)
+        public LookaheadParser(Parser<TToken, TUser, T> parser)
         {
             _parser = parser;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
         {
             state.PushBookmark();
 

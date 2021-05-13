@@ -1,6 +1,6 @@
 namespace Pidgin
 {
-    public partial class Parser<TToken, T>
+    public partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser which behaves like the current parser but returns <paramref name="result"/> after a successful parse.
@@ -8,14 +8,14 @@ namespace Pidgin
         /// </summary>
         /// <example>
         /// Equivalent to using <see cref="Select"/> with a function that returns a fixed value,
-        /// or <see cref="Then{U}(Parser{TToken, U})"/> with <see cref="Parser{TToken}.Return{T}(T)"/>.
+        /// or <see cref="Then{U}(Parser{TToken, TUser, U})"/> with <see cref="Parser{TToken, TUser}.Return{T}(T)"/>.
         /// <code>
         /// p.WithResult(x) == p.Select(_ => x) == p.Then(Return(x));
         /// </code>
         /// </example>
         /// <param name="result">The result</param>
         /// <returns>A parser which behaves like the current parser but returns <paramref name="result"/>.</returns>
-        public Parser<TToken, U> WithResult<U>(U result)
+        public Parser<TToken, TUser, U> WithResult<U>(U result)
             => this.Select(_ => result);
 
         /// <summary>
@@ -24,14 +24,14 @@ namespace Pidgin
         /// </summary>
         /// <example>
         /// Equivalent to using <see cref="Select"/> with a function that returns a fixed value,
-        /// or <see cref="Then{U}(Parser{TToken, U})"/> with <see cref="Parser{TToken}.Return{T}(T)"/>.
+        /// or <see cref="Then{U}(Parser{TToken, TUser, U})"/> with <see cref="Parser{TToken, TUser}.Return{T}(T)"/>.
         /// <code>
         /// p.ThenReturn(x) == p.Select(_ => x) == p.Then(Return(x));
         /// </code>
         /// </example>
         /// <param name="result">The result</param>
         /// <returns>A parser which behaves like the current parser but returns <paramref name="result"/>.</returns>
-        public Parser<TToken, U> ThenReturn<U>(U result)
+        public Parser<TToken, TUser, U> ThenReturn<U>(U result)
             => this.Select(_ => result);
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Pidgin
         /// Equivalent to <c>p.WithResult(Unit.Value)</c>.
         /// </summary>
         /// <returns>A parser which behaves like the current parser but returns <see cref="Unit.Value"/>.</returns>
-        public Parser<TToken, Unit> IgnoreResult()
+        public Parser<TToken, TUser, Unit> IgnoreResult()
             => this.WithResult(Unit.Value);
     }
 }

@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser which applies the current parser repeatedly, interleaved with a specified parser.
@@ -13,7 +13,7 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser repeatedly, interleaved by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> Separated<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> Separated<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
@@ -30,13 +30,13 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser at least once, interleaved by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> SeparatedAtLeastOnce<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> SeparatedAtLeastOnce<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
                 throw new ArgumentNullException(nameof(separator));
             }
-            return new SeparatedAtLeastOnceParser<TToken, T, U>(this, separator);
+            return new SeparatedAtLeastOnceParser<TToken, TUser, T, U>(this, separator);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser repeatedly, interleaved and terminated by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> SeparatedAndTerminated<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> SeparatedAndTerminated<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
@@ -62,7 +62,7 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser at least once, interleaved and terminated by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> SeparatedAndTerminatedAtLeastOnce<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> SeparatedAndTerminatedAtLeastOnce<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
@@ -78,7 +78,7 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser repeatedly, interleaved and optionally terminated by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> SeparatedAndOptionallyTerminated<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> SeparatedAndOptionallyTerminated<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
@@ -95,28 +95,28 @@ namespace Pidgin
         /// <typeparam name="U">The return type of the separator parser</typeparam>
         /// <param name="separator">A parser which parses a separator to be interleaved with the current parser</param>
         /// <returns>A parser which applies the current parser at least once, interleaved and optionally terminated by <paramref name="separator"/></returns>
-        public Parser<TToken, IEnumerable<T>> SeparatedAndOptionallyTerminatedAtLeastOnce<U>(Parser<TToken, U> separator)
+        public Parser<TToken, TUser, IEnumerable<T>> SeparatedAndOptionallyTerminatedAtLeastOnce<U>(Parser<TToken, TUser, U> separator)
         {
             if (separator == null)
             {
                 throw new ArgumentNullException(nameof(separator));
             }
-            return new SeparatedAndOptionallyTerminatedAtLeastOnceParser<TToken, T, U>(this, separator);
+            return new SeparatedAndOptionallyTerminatedAtLeastOnceParser<TToken, TUser, T, U>(this, separator);
         }
     }
 
-    internal sealed class SeparatedAtLeastOnceParser<TToken, T, U> : Parser<TToken, IEnumerable<T>>
+    internal sealed class SeparatedAtLeastOnceParser<TToken, TUser, T, U> : Parser<TToken, TUser, IEnumerable<T>>
     {
-        private readonly Parser<TToken, T> _parser;
-        private readonly Parser<TToken, T> _remainderParser;
+        private readonly Parser<TToken, TUser, T> _parser;
+        private readonly Parser<TToken, TUser, T> _remainderParser;
 
-        public SeparatedAtLeastOnceParser(Parser<TToken, T> parser, Parser<TToken, U> separator)
+        public SeparatedAtLeastOnceParser(Parser<TToken, TUser, T> parser, Parser<TToken, TUser, U> separator)
         {
             _parser = parser;
             _remainderParser = separator.Then(parser);
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
         {
             if (!_parser.TryParse(ref state, ref expecteds, out var result1))
             {
@@ -134,7 +134,7 @@ namespace Pidgin
             return true;
         }
 
-        private bool Rest(Parser<TToken, T> parser, ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, List<T> ts)
+        private bool Rest(Parser<TToken, TUser, T> parser, ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, List<T> ts)
         {
             var lastStartingLoc = state.Location;
             var childExpecteds = new PooledList<Expected<TToken>>(state.Configuration.ArrayPoolProvider.GetArrayPool<Expected<TToken>>());
@@ -166,18 +166,18 @@ namespace Pidgin
         }
     }
 
-    internal sealed class SeparatedAndOptionallyTerminatedAtLeastOnceParser<TToken, T, U> : Parser<TToken, IEnumerable<T>>
+    internal sealed class SeparatedAndOptionallyTerminatedAtLeastOnceParser<TToken, TUser, T, U> : Parser<TToken, TUser, IEnumerable<T>>
     {
-        private readonly Parser<TToken, T> _parser;
-        private readonly Parser<TToken, U> _separator;
+        private readonly Parser<TToken, TUser, T> _parser;
+        private readonly Parser<TToken, TUser, U> _separator;
 
-        public SeparatedAndOptionallyTerminatedAtLeastOnceParser(Parser<TToken, T> parser, Parser<TToken, U> separator)
+        public SeparatedAndOptionallyTerminatedAtLeastOnceParser(Parser<TToken, TUser, T> parser, Parser<TToken, TUser, U> separator)
         {
             _parser = parser;
             _separator = separator;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
         {
             if (!_parser.TryParse(ref state, ref expecteds, out var result1))
             {

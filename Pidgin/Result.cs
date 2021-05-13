@@ -5,11 +5,12 @@ namespace Pidgin
 {
     /// <summary>
     /// Represents the result of parsing.
-    /// A parse result may be successful (<see cref="Result{TToken, T}.Success"/> == true), in which case it contains a value, or it may be a failure, in which case it contains an error
+    /// A parse result may be successful (<see cref="Result{TToken, TUser, T}.Success"/> == true), in which case it contains a value, or it may be a failure, in which case it contains an error
     /// </summary>
     /// <typeparam name="TToken"></typeparam>
+    /// <typeparam name="TUser"></typeparam>
     /// <typeparam name="T"></typeparam>
-    public class Result<TToken, T>
+    public class Result<TToken, TUser, T>
     {
         /// <summary>
         /// Did the parse succeed?
@@ -20,20 +21,27 @@ namespace Pidgin
         private readonly T _value;
         private readonly ParseError<TToken>? _error;
 
-        internal Result(bool consumedInput, T value)
+        internal Result(bool consumedInput, T value, TUser userState)
         {
             Success = true;
             ConsumedInput = consumedInput;
+            UserState = userState;
             _value = value;
             _error = default(ParseError<TToken>);
         }
-        internal Result(bool consumedInput, ParseError<TToken> error)
+        internal Result(bool consumedInput, ParseError<TToken> error, TUser userState)
         {
             Success = false;
             ConsumedInput = consumedInput;
+            UserState = userState;
             _value = default(T)!;
             _error = error;
         }
+
+        /// <summary>
+        /// The parsers final user state
+        /// </summary>
+        public TUser UserState { get; }
 
         /// <summary>
         /// The parser's return value
@@ -105,10 +113,10 @@ namespace Pidgin
         /// <param name="selector">A transformation function to apply to the contained value</param>
         /// <typeparam name="U">The type of the resulting value</typeparam>
         /// <returns>The result of applying the transformation function to the contained value</returns>
-        public Result<TToken, U> Select<U>(Func<T, U> selector)
+        public Result<TToken, TUser, U> Select<U>(Func<T, U> selector)
             => Success
-                ? new Result<TToken, U>(ConsumedInput, selector(_value))
-                : new Result<TToken, U>(ConsumedInput, Error!);
+                ? new Result<TToken, TUser, U>(ConsumedInput, selector(_value), UserState)
+                : new Result<TToken, TUser, U>(ConsumedInput, Error!, UserState);
 
         /// <summary>
         /// Projects the value of the result into a result, and flattens the resulting value into a single result.
@@ -116,7 +124,7 @@ namespace Pidgin
         /// <param name="selector">A transformation function to apply to the contained value</param>
         /// <typeparam name="U">The type of the resulting possibly-absent value</typeparam>
         /// <returns>The final result</returns>
-        public Result<TToken, U> SelectMany<U>(Func<T, Result<TToken, U>> selector)
+        public Result<TToken, TUser, U> SelectMany<U>(Func<T, Result<TToken, TUser, U>> selector)
             => SelectMany(selector, (t, u) => u);
         
         /// <summary>
@@ -127,18 +135,18 @@ namespace Pidgin
         /// <typeparam name="U">The type of the value to select</typeparam>
         /// <typeparam name="R">The type of the resulting possibly-absent value</typeparam>
         /// <returns>The result of applying <paramref name="selector"/> to the contained value and <paramref name="result"/> to the intermediate values</returns>
-        public Result<TToken, R> SelectMany<U, R>(Func<T, Result<TToken, U>> selector, Func<T, U, R> result)
+        public Result<TToken, TUser, R> SelectMany<U, R>(Func<T, Result<TToken, TUser, U>> selector, Func<T, U, R> result)
         {
             if (!Success)
             {
-                return new Result<TToken, R>(ConsumedInput, Error!);
+                return new Result<TToken, TUser, R>(ConsumedInput, Error!, UserState);
             }
             var ru = selector(_value);
             if (!ru.Success)
             {
-                return new Result<TToken, R>(ConsumedInput || ru.ConsumedInput, ru.Error!);
+                return new Result<TToken, TUser, R>(ConsumedInput || ru.ConsumedInput, ru.Error!, UserState);
             }
-            return new Result<TToken, R>(ConsumedInput || ru.ConsumedInput, result(_value, ru._value));
+            return new Result<TToken, TUser, R>(ConsumedInput || ru.ConsumedInput, result(_value, ru._value), UserState);
         }
 
         /// <summary>
@@ -146,7 +154,7 @@ namespace Pidgin
         /// </summary>
         /// <param name="result">A fallback result if this one has an error</param>
         /// <returns>This result, if <see cref="Success"/> == true, or the result of calling <paramref name="result"/></returns>
-        public Result<TToken, T> Or(Func<Result<TToken, T>> result)
+        public Result<TToken, TUser, T> Or(Func<Result<TToken, TUser, T>> result)
             => !Success ? result() : this;
 
         /// <summary>
@@ -154,7 +162,7 @@ namespace Pidgin
         /// </summary>
         /// <param name="result">A fallback result if this one has an error</param>
         /// <returns>This result, if <see cref="Success"/> == true, or <paramref name="result"/></returns>
-        public Result<TToken, T> Or(Result<TToken, T> result)
+        public Result<TToken, TUser, T> Or(Result<TToken, TUser, T> result)
             => !Success ? result : this;
 
         /// <summary>
@@ -163,9 +171,9 @@ namespace Pidgin
         /// <typeparam name="U">The type to cast the contained value to</typeparam>
         /// <exception cref="System.InvalidCastException">Thrown when the contained value is not an instance of <typeparamref name="U"/></exception>
         /// <returns>A result containing this result's value casted to <typeparamref name="U"/></returns>
-        public Result<TToken, U> Cast<U>()
+        public Result<TToken, TUser, U> Cast<U>()
             => Success
-                ? new Result<TToken, U>(ConsumedInput, (U)(object)_value!)
-                : new Result<TToken, U>(ConsumedInput, Error!);
+                ? new Result<TToken, TUser, U>(ConsumedInput, (U)(object)_value!, UserState)
+                : new Result<TToken, TUser, U>(ConsumedInput, Error!, UserState);
     }
 }

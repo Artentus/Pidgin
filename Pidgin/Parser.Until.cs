@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser which applies this parser zero or more times until <paramref name="terminator"/> succeeds.
@@ -14,7 +14,7 @@ namespace Pidgin
         /// <typeparam name="U">The return type of <paramref name="terminator"/></typeparam>
         /// <param name="terminator">A parser to parse a terminator</param>
         /// <returns>A parser which applies this parser repeatedly until <paramref name="terminator"/> succeeds</returns>
-        public Parser<TToken, IEnumerable<T>> Until<U>(Parser<TToken, U> terminator)
+        public Parser<TToken, TUser, IEnumerable<T>> Until<U>(Parser<TToken, TUser, U> terminator)
         {
             if (terminator == null)
             {
@@ -31,25 +31,25 @@ namespace Pidgin
         /// </summary>
         /// <param name="terminator">A parser to parse a terminator</param>
         /// <returns>A parser which applies this parser repeatedly until <paramref name="terminator"/> succeeds</returns>
-        public Parser<TToken, IEnumerable<T>> AtLeastOnceUntil<U>(Parser<TToken, U> terminator)
+        public Parser<TToken, TUser, IEnumerable<T>> AtLeastOnceUntil<U>(Parser<TToken, TUser, U> terminator)
         {
             if (terminator == null)
             {
                 throw new ArgumentNullException(nameof(terminator));
             }
-            return new AtLeastOnceUntilParser<TToken, T, U>(this, terminator, true)!;
+            return new AtLeastOnceUntilParser<TToken, TUser, T, U>(this, terminator, true)!;
         }
 
         /// <summary>
         /// Creates a parser which applies this parser zero or more times until <paramref name="terminator"/> succeeds, discarding the results.
-        /// This is more efficient than <see cref="Until{U}(Parser{TToken, U})"/> if you don't need the results.
+        /// This is more efficient than <see cref="Until{U}(Parser{TToken, TUser, U})"/> if you don't need the results.
         /// Fails if this parser fails or if <paramref name="terminator"/> fails after consuming input.
         /// The return value of <paramref name="terminator"/> is ignored.
         /// </summary>
         /// <typeparam name="U">The return type of <paramref name="terminator"/></typeparam>
         /// <param name="terminator">A parser to parse a terminator</param>
         /// <returns>A parser which applies this parser repeatedly until <paramref name="terminator"/> succeeds, discarding the results</returns>
-        public Parser<TToken, Unit> SkipUntil<U>(Parser<TToken, U> terminator)
+        public Parser<TToken, TUser, Unit> SkipUntil<U>(Parser<TToken, TUser, U> terminator)
         {
             if (terminator == null)
             {
@@ -58,32 +58,32 @@ namespace Pidgin
             return terminator.Then(ReturnUnit)
                 .Or(this.SkipAtLeastOnceUntil(terminator));
         }
-        
+
         /// <summary>
         /// Creates a parser which applies this parser one or more times until <paramref name="terminator"/> succeeds, discarding the results.
-        /// This is more efficient than <see cref="AtLeastOnceUntil{U}(Parser{TToken, U})"/> if you don't need the results.
+        /// This is more efficient than <see cref="AtLeastOnceUntil{U}(Parser{TToken, TUser, U})"/> if you don't need the results.
         /// Fails if this parser fails or if <paramref name="terminator"/> fails after consuming input.
         /// The return value of <paramref name="terminator"/> is ignored.
         /// </summary>
         /// <param name="terminator">A parser to parse a terminator</param>
         /// <returns>A parser which applies this parser repeatedly until <paramref name="terminator"/> succeeds, discarding the results</returns>
-        public Parser<TToken, Unit> SkipAtLeastOnceUntil<U>(Parser<TToken, U> terminator)
+        public Parser<TToken, TUser, Unit> SkipAtLeastOnceUntil<U>(Parser<TToken, TUser, U> terminator)
         {
             if (terminator == null)
             {
                 throw new ArgumentNullException(nameof(terminator));
             }
-            return new AtLeastOnceUntilParser<TToken, T, U>(this, terminator, false).Then(ReturnUnit);
+            return new AtLeastOnceUntilParser<TToken, TUser, T, U>(this, terminator, false).Then(ReturnUnit);
         }
     }
 
-    internal sealed class AtLeastOnceUntilParser<TToken, T, U> : Parser<TToken, IEnumerable<T>?>
+    internal sealed class AtLeastOnceUntilParser<TToken, TUser, T, U> : Parser<TToken, TUser, IEnumerable<T>?>
     {
-        private readonly Parser<TToken, T> _parser;
-        private readonly Parser<TToken, U> _terminator;
+        private readonly Parser<TToken, TUser, T> _parser;
+        private readonly Parser<TToken, TUser, U> _terminator;
         private readonly bool _keepResults;
 
-        public AtLeastOnceUntilParser(Parser<TToken, T> parser, Parser<TToken, U> terminator, bool keepResults) : base()
+        public AtLeastOnceUntilParser(Parser<TToken, TUser, T> parser, Parser<TToken, TUser, U> terminator, bool keepResults) : base()
         {
             _parser = parser;
             _terminator = terminator;
@@ -91,7 +91,7 @@ namespace Pidgin
         }
 
         // see comment about expecteds in ParseState.Error.cs
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T>? result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T>? result)
         {
             var ts = _keepResults ? new List<T>() : null;
 

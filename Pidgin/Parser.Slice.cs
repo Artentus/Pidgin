@@ -2,7 +2,7 @@ using System;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Returns a parser which runs the current parser and applies a selector function.
@@ -20,7 +20,7 @@ namespace Pidgin
         /// </param>
         /// <typeparam name="U">The result type</typeparam>
         /// <returns>A parser which runs the current parser and applies a selector function.</returns>
-        public Parser<TToken, U> Slice<U>(ReadOnlySpanFunc<TToken, T, U> selector)
+        public Parser<TToken, TUser, U> Slice<U>(ReadOnlySpanFunc<TToken, T, U> selector)
             => this.MapWithInput(selector);
     }
 }

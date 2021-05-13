@@ -2,7 +2,7 @@ using System;
 
 namespace Pidgin
 {
-    public partial class Parser<TToken, T>
+    public partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// For debugging use.
@@ -10,7 +10,7 @@ namespace Pidgin
         /// Creates a new parser which runs the current parser and prints the given message to the console.
         /// </summary>
         /// <returns>A parser which runs the current parser and prints the given message to the console.</returns>
-        public Parser<TToken, T> Trace(Func<T, string> message)
+        public Parser<TToken, TUser, T> Trace(Func<T, string> message)
         {
             if (message == null)
             {
@@ -29,7 +29,7 @@ namespace Pidgin
         /// Creates a new parser which runs the current parser and prints the given message to the console.
         /// </summary>
         /// <returns>A parser which runs the current parser and prints the given message to the console.</returns>
-        public Parser<TToken, T> Trace(string message)
+        public Parser<TToken, TUser, T> Trace(string message)
         {
             if (message == null)
             {
@@ -44,6 +44,6 @@ namespace Pidgin
         /// Creates a new parser which runs the current parser and prints the result to the console.
         /// </summary>
         /// <returns>A parser which runs the current parser and prints the result to the console.</returns>
-        public Parser<TToken, T> TraceResult() => this.Trace(x => x!.ToString()!);
+        public Parser<TToken, TUser, T> TraceResult() => this.Trace(x => x!.ToString()!);
     }
 }

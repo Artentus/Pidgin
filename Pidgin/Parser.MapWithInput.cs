@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Returns a parser which runs the current parser and applies a selector function.
@@ -21,28 +21,28 @@ namespace Pidgin
         /// </param>
         /// <typeparam name="U">The result type</typeparam>
         /// <returns>A parser which runs the current parser and applies a selector function.</returns>
-        public Parser<TToken, U> MapWithInput<U>(ReadOnlySpanFunc<TToken, T, U> selector)
+        public Parser<TToken, TUser, U> MapWithInput<U>(ReadOnlySpanFunc<TToken, T, U> selector)
         {
             if (selector == null)
             {
                 throw new ArgumentNullException(nameof(selector));
             }
-            return new MapWithInputParser<TToken, T, U>(this, selector);
+            return new MapWithInputParser<TToken, TUser, T, U>(this, selector);
         }
     }
 
-    internal class MapWithInputParser<TToken, T, U> : Parser<TToken, U>
+    internal class MapWithInputParser<TToken, TUser, T, U> : Parser<TToken, TUser, U>
     {
-        private Parser<TToken, T> _parser;
+        private Parser<TToken, TUser, T> _parser;
         private ReadOnlySpanFunc<TToken, T, U> _selector;
 
-        public MapWithInputParser(Parser<TToken, T> parser, ReadOnlySpanFunc<TToken, T, U> selector)
+        public MapWithInputParser(Parser<TToken, TUser, T> parser, ReadOnlySpanFunc<TToken, T, U> selector)
         {
             _parser = parser;
             _selector = selector;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out U result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out U result)
         {
             var start = state.Location;
 

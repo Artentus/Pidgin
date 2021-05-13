@@ -3,14 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser that fails if the value returned by the current parser fails to satisfy a predicate.
         /// </summary>
         /// <param name="predicate">The predicate to apply to the value returned by the current parser</param>
         /// <returns>A parser that fails if the value returned by the current parser fails to satisfy <paramref name="predicate"/></returns>
-        public Parser<TToken, T> Assert(Func<T, bool> predicate)
+        public Parser<TToken, TUser, T> Assert(Func<T, bool> predicate)
         {
             if (predicate == null)
             {
@@ -25,7 +25,7 @@ namespace Pidgin
         /// <param name="predicate">The predicate to apply to the value returned by the current parser</param>
         /// <param name="message">A custom error message to return when the value returned by the current parser fails to satisfy the predicate</param>
         /// <returns>A parser that fails if the value returned by the current parser fails to satisfy <paramref name="predicate"/></returns>
-        public Parser<TToken, T> Assert(Func<T, bool> predicate, string message)
+        public Parser<TToken, TUser, T> Assert(Func<T, bool> predicate, string message)
         {
             if (predicate == null)
             {
@@ -44,7 +44,7 @@ namespace Pidgin
         /// <param name="predicate">The predicate to apply to the value returned by the current parser</param>
         /// <param name="message">A function to produce a custom error message to return when the value returned by the current parser fails to satisfy the predicate</param>
         /// <returns>A parser that fails if the value returned by the current parser fails to satisfy <paramref name="predicate"/></returns>
-        public Parser<TToken, T> Assert(Func<T, bool> predicate, Func<T, string> message)
+        public Parser<TToken, TUser, T> Assert(Func<T, bool> predicate, Func<T, string> message)
         {
             if (predicate == null)
             {
@@ -54,27 +54,27 @@ namespace Pidgin
             {
                 throw new ArgumentNullException(nameof(message));
             }
-            return new AssertParser<TToken, T>(this, predicate, message);
+            return new AssertParser<TToken, TUser, T>(this, predicate, message);
         }
     }
 
-    internal sealed class AssertParser<TToken, T> : Parser<TToken, T>
+    internal sealed class AssertParser<TToken, TUser, T> : Parser<TToken, TUser, T>
     {
         private static readonly Expected<TToken> _expected
             = new Expected<TToken>("result satisfying assertion");
 
-        private readonly Parser<TToken, T> _parser;
+        private readonly Parser<TToken, TUser, T> _parser;
         private readonly Func<T, bool> _predicate;
         private readonly Func<T, string> _message;
 
-        public AssertParser(Parser<TToken, T> parser, Func<T, bool> predicate, Func<T, string> message)
+        public AssertParser(Parser<TToken, TUser, T> parser, Func<T, bool> predicate, Func<T, string> message)
         {
             _parser = parser;
             _predicate = predicate;
             _message = message;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result)
         {
             var childExpecteds = new PooledList<Expected<TToken>>(state.Configuration.ArrayPoolProvider.GetArrayPool<Expected<TToken>>());
 

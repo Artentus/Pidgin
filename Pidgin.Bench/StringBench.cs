@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using static Pidgin.Parser;
-using static Pidgin.Parser<char>;
+using static Pidgin.Parser<char, Pidgin.Unit>;
 
 namespace Pidgin.Bench
 {
@@ -8,8 +8,8 @@ namespace Pidgin.Bench
     public class StringBench
     {
         private static readonly string _input = new string('a', 65536);
-        private static readonly Parser<char, string> _string = Parser.String(_input);
-        private static readonly Parser<char, string> _cistring = Parser.CIString(_input);
+        private static readonly Parser<char, Unit, string> _string = Parser.String(_input);
+        private static readonly Parser<char, Unit, string> _cistring = Parser.CIString(_input);
 
         private static readonly string _whitespace = new string(' ', 65536);
 

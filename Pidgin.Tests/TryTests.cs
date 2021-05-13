@@ -49,16 +49,16 @@ namespace Pidgin.Tests
 
 
         private void DoTest<TToken, TInput>(
-            Func<Parser<TToken, IEnumerable<TToken>>, TInput, Result<TToken, IEnumerable<TToken>>> parseFunc,
+            Func<Parser<TToken, Unit, IEnumerable<TToken>>, TInput, Result<TToken, Unit, IEnumerable<TToken>>> parseFunc,
             Func<string, IEnumerable<TToken>> render,
             Func<string, TInput> toInput
         ) where TToken : IEquatable<TToken>
         {
             {
                 var parser =
-                    Try(Parser<TToken>.Sequence(render("foo")))
-                        .Then(Parser<TToken>.Sequence(render("bar")))
-                        .Or(Parser<TToken>.Sequence(render("four")));
+                    Try(Parser<TToken, Unit>.Sequence(render("foo")))
+                        .Then(Parser<TToken, Unit>.Sequence(render("bar")))
+                        .Or(Parser<TToken, Unit>.Sequence(render("four")));
                 AssertSuccess(parseFunc(parser, toInput("foobar")), render("bar"), true);
                 AssertSuccess(parseFunc(parser, toInput("four")), render("four"), true);  // it should have consumed the "fo" but then backtracked
                 AssertFailure(
@@ -119,10 +119,10 @@ namespace Pidgin.Tests
             }
             {
                 var parser = Try(
-                    Parser<TToken>.Sequence(render("foo")).Then(
-                        Try(Parser<TToken>.Sequence(render("bar"))).Or(Parser<TToken>.Sequence(render("baz")))
+                    Parser<TToken, Unit>.Sequence(render("foo")).Then(
+                        Try(Parser<TToken, Unit>.Sequence(render("bar"))).Or(Parser<TToken, Unit>.Sequence(render("baz")))
                     )
-                ).Or(Parser<TToken>.Sequence(render("foobat")));
+                ).Or(Parser<TToken, Unit>.Sequence(render("foobat")));
                 AssertSuccess(parseFunc(parser, toInput("foobar")), render("bar"), true);
                 AssertSuccess(parseFunc(parser, toInput("foobaz")), render("baz"), true);
                 // "" -> "foo" -> "fooba[r]" -> "foo" -> "fooba[z]" -> "foo" -> "" -> "foobat"

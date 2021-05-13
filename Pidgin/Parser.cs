@@ -3,18 +3,27 @@
 namespace Pidgin
 {
     /// <summary>
-    /// Constructor functions, extension methods and utilities for <see cref="Parser{TToken, T}"/>.
+    /// Constructor functions, extension methods and utilities for <see cref="Parser{TToken, TUser, T}"/>.
     /// This class is intended to be imported statically ("using static Pidgin.Parser").
     /// </summary>
     public static partial class Parser
     {
     }
     /// <summary>
-    /// Constructor functions, extension methods and utilities for <see cref="Parser{TToken, T}"/>
+    /// Constructor functions, extension methods and utilities for <see cref="Parser{TToken, TUser, T}"/>.
+    /// This class is intended to be imported statically ("using static Pidgin.Parser").
+    /// </summary>
+    /// <typeparam name="TUser">The type of the user state for parsers created by methods in this class</typeparam>
+    public static partial class Parser<TUser>
+    {
+    }
+    /// <summary>
+    /// Constructor functions, extension methods and utilities for <see cref="Parser{TToken, TUser, T}"/>
     /// This class is intended to be imported statically, with the type parameter set to the type of tokens in your input stream ("using static Pidgin.Parser&lt;char&gt;").
     /// </summary>
     /// <typeparam name="TToken">The type of the tokens in the input stream for parsers created by methods in this class</typeparam>
-    public static partial class Parser<TToken>
+    /// <typeparam name="TUser">The type of the user state for parsers created by methods in this class</typeparam>
+    public static partial class Parser<TToken, TUser>
     {
     }
     /// <summary>
@@ -22,9 +31,10 @@ namespace Pidgin
     /// A parser can either succeed, and return a value of type <typeparamref name="T"/>, or fail and return a <see cref="ParseError{TToken}"/>.
     /// </summary>
     /// <typeparam name="TToken">The type of the tokens in the parser's input stream</typeparam>
+    /// <typeparam name="TUser">The type of the user state</typeparam>
     /// <typeparam name="T">The type of the value returned by the parser</typeparam>
     /// <remarks>This type is not intended to be subclassed by users of the library</remarks>
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         // invariant: state.Error is populated with the error that caused the failure
         // if the result was not successful
@@ -37,7 +47,7 @@ namespace Pidgin
         /// Override this method to implement a custom parser.
         /// Use this if you can't do what you need using the base parser combinators.
         ///
-        /// If your parser fails it should return false and call <see cref="ParseState{TToken}.SetError(Maybe{TToken}, bool, int, string?)"/>.
+        /// If your parser fails it should return false and call <see cref="ParseState{TToken, TUser}.SetError(Maybe{TToken}, bool, int, string?)"/>.
         ///
         /// WARNING: This API is <strong>unstable</strong>
         /// and subject to change in future versions of the library.
@@ -46,6 +56,6 @@ namespace Pidgin
         /// <param name="expecteds">A list to which the parser can add its expected tokens when it fails</param>
         /// <param name="result">The result</param>
         /// <returns>True if the parser succeeded, false if it failed.</returns>
-        public abstract bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result);
+        public abstract bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out T result);
     }
 }

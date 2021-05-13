@@ -1,8 +1,6 @@
 using Xunit;
-using Pidgin;
 using Pidgin.Permutation;
 using static Pidgin.Parser;
-using static Pidgin.Parser<char>;
 using System.Linq;
 
 namespace Pidgin.Tests

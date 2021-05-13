@@ -1,39 +1,68 @@
 using System.Collections.Generic;
-using static Pidgin.Parser<char>;
 
 namespace Pidgin
 {
+    public static partial class Parser<TUser>
+    {
+        /// <summary>
+        /// A parser that parses and returns a single whitespace character
+        /// </summary>
+        /// <returns>A parser that parses and returns a single whitespace character</returns>
+        public static Parser<char, TUser, char> Whitespace { get; }
+            = Parser<char, TUser>.Token(char.IsWhiteSpace).Labelled("whitespace");
+
+        /// <summary>
+        /// A parser that parses and returns a sequence of whitespace characters
+        /// </summary>
+        /// <returns>A parser that parses and returns a sequence of whitespace characters</returns>
+        public static Parser<char, TUser, IEnumerable<char>> Whitespaces { get; }
+            = Whitespace.Many().Labelled("whitespace");
+
+        /// <summary>
+        /// A parser that parses and returns a sequence of whitespace characters packed into a string
+        /// </summary>
+        /// <returns>A parser that parses and returns a sequence of whitespace characters packed into a string</returns>
+        public static Parser<char, TUser, string> WhitespaceString { get; }
+            = Whitespace.ManyString().Labelled("whitespace");
+
+        /// <summary>
+        /// A parser that discards a sequence of whitespace characters
+        /// </summary>
+        /// <returns>A parser that discards a sequence of whitespace characters</returns>
+        public static Parser<char, TUser, Unit> SkipWhitespaces { get; }
+            = new SkipWhitespacesParser<TUser>();
+    }
+
     public static partial class Parser
     {
         /// <summary>
         /// A parser that parses and returns a single whitespace character
         /// </summary>
         /// <returns>A parser that parses and returns a single whitespace character</returns>
-        public static Parser<char, char> Whitespace { get; }
-            = Token(char.IsWhiteSpace).Labelled("whitespace");
+        public static Parser<char, Unit, char> Whitespace { get; } = Parser<Unit>.Whitespace;
+
         /// <summary>
         /// A parser that parses and returns a sequence of whitespace characters
         /// </summary>
         /// <returns>A parser that parses and returns a sequence of whitespace characters</returns>
-        public static Parser<char, IEnumerable<char>> Whitespaces { get; }
-            = Whitespace.Many().Labelled("whitespace");
+        public static Parser<char, Unit, IEnumerable<char>> Whitespaces { get; } = Parser<Unit>.Whitespaces;
+
         /// <summary>
         /// A parser that parses and returns a sequence of whitespace characters packed into a string
         /// </summary>
         /// <returns>A parser that parses and returns a sequence of whitespace characters packed into a string</returns>
-        public static Parser<char, string> WhitespaceString { get; }
-            = Whitespace.ManyString().Labelled("whitespace");
+        public static Parser<char, Unit, string> WhitespaceString { get; } = Parser<Unit>.WhitespaceString;
+
         /// <summary>
         /// A parser that discards a sequence of whitespace characters
         /// </summary>
         /// <returns>A parser that discards a sequence of whitespace characters</returns>
-        public static Parser<char, Unit> SkipWhitespaces { get; }
-            = new SkipWhitespacesParser();
+        public static Parser<char, Unit, Unit> SkipWhitespaces { get; } = Parser<Unit>.SkipWhitespaces;
     }
 
-    internal class SkipWhitespacesParser : Parser<char, Unit>
+    internal class SkipWhitespacesParser<TUser> : Parser<char, TUser, Unit>
     {
-        public unsafe override bool TryParse(ref ParseState<char> state, ref PooledList<Expected<char>> expecteds, out Unit result)
+        public unsafe override bool TryParse(ref ParseState<char, TUser> state, ref PooledList<Expected<char>> expecteds, out Unit result)
         {
             const long space = (long)' ';
             const long fourSpaces = space | space << 16 | space << 32 | space << 48;

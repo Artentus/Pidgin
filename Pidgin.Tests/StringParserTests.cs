@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Xunit;
 using static Pidgin.Parser;
-using static Pidgin.Parser<char>;
+using static Pidgin.Parser<char, Pidgin.Unit>;
 
 namespace Pidgin.Tests
 {
@@ -2421,7 +2421,7 @@ namespace Pidgin.Tests
         public void TestRec()
         {
             // roughly equivalent to String("foo").Separated(Char(' '))
-            Parser<char, string>? p2 = null;
+            Parser<char, Unit, string>? p2 = null;
             var p1 = String("foo").Then(
                 Rec(() => p2!).Optional(),
                 (x, y) => y.HasValue ? x + y.Value : x

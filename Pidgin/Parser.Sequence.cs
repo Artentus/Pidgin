@@ -8,14 +8,14 @@ using LExpression = System.Linq.Expressions.Expression;
 
 namespace Pidgin
 {
-    public static partial class Parser<TToken>
+    public static partial class Parser<TToken, TUser>
     {
         /// <summary>
         /// Creates a parser that parses and returns a literal sequence of tokens
         /// </summary>
         /// <param name="tokens">A sequence of tokens</param>
         /// <returns>A parser that parses a literal sequence of tokens</returns>
-        public static Parser<TToken, TToken[]> Sequence(params TToken[] tokens)
+        public static Parser<TToken, TUser, TToken[]> Sequence(params TToken[] tokens)
         {
             if (tokens == null)
             {
@@ -30,14 +30,14 @@ namespace Pidgin
         /// <typeparam name="TEnumerable">The type of tokens to parse</typeparam>
         /// <param name="tokens">A sequence of tokens</param>
         /// <returns>A parser that parses a literal sequence of tokens</returns>
-        public static Parser<TToken, TEnumerable> Sequence<TEnumerable>(TEnumerable tokens)
+        public static Parser<TToken, TUser, TEnumerable> Sequence<TEnumerable>(TEnumerable tokens)
             where TEnumerable : IEnumerable<TToken>
         {
             if (tokens == null)
             {
                 throw new ArgumentNullException(nameof(tokens));
             }
-            return SequenceTokenParser<TToken, TEnumerable>.Create(tokens);
+            return SequenceTokenParser<TToken, TUser, TEnumerable>.Create(tokens);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Pidgin
         /// <typeparam name="T">The return type of the parsers</typeparam>
         /// <param name="parsers">A sequence of parsers</param>
         /// <returns>A parser that applies a sequence of parsers and collects the results</returns>
-        public static Parser<TToken, IEnumerable<T>> Sequence<T>(params Parser<TToken, T>[] parsers)
+        public static Parser<TToken, TUser, IEnumerable<T>> Sequence<T>(params Parser<TToken, TUser, T>[] parsers)
         {
             return Sequence(parsers.AsEnumerable());
         }
@@ -59,7 +59,7 @@ namespace Pidgin
         /// <typeparam name="T">The return type of the parsers</typeparam>
         /// <param name="parsers">A sequence of parsers</param>
         /// <returns>A parser that applies a sequence of parsers and collects the results</returns>
-        public static Parser<TToken, IEnumerable<T>> Sequence<T>(IEnumerable<Parser<TToken, T>> parsers)
+        public static Parser<TToken, TUser, IEnumerable<T>> Sequence<T>(IEnumerable<Parser<TToken, TUser, T>> parsers)
         {
             if (parsers == null)
             {
@@ -70,20 +70,20 @@ namespace Pidgin
             {
                 return parsersArray[0].Select(x => new[] { x }.AsEnumerable());
             }
-            return new SequenceParser<TToken, T>(parsersArray);
+            return new SequenceParser<TToken, TUser, T>(parsersArray);
         }
     }
 
-    internal sealed class SequenceParser<TToken, T> : Parser<TToken, IEnumerable<T>>
+    internal sealed class SequenceParser<TToken, TUser, T> : Parser<TToken, TUser, IEnumerable<T>>
     {
-        private readonly Parser<TToken, T>[] _parsers;
+        private readonly Parser<TToken, TUser, T>[] _parsers;
 
-        public SequenceParser(Parser<TToken, T>[] parsers)
+        public SequenceParser(Parser<TToken, TUser, T>[] parsers)
         {
             _parsers = parsers;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out IEnumerable<T> result)
         {
             var ts = new T[_parsers.Length];
             
@@ -105,18 +105,18 @@ namespace Pidgin
         }
     }
 
-    internal static class SequenceTokenParser<TToken, TEnumerable>
+    internal static class SequenceTokenParser<TToken, TUser, TEnumerable>
         where TEnumerable : IEnumerable<TToken>
     {
-        private static readonly Func<TEnumerable, Parser<TToken, TEnumerable>>? _createParser;
+        private static readonly Func<TEnumerable, Parser<TToken, TUser, TEnumerable>>? _createParser;
 
-        public static Parser<TToken, TEnumerable> Create(TEnumerable tokens)
+        public static Parser<TToken, TUser, TEnumerable> Create(TEnumerable tokens)
         {
             if (_createParser != null)
             {
                 return _createParser(tokens);
             }
-            return new SequenceTokenParserSlow<TToken, TEnumerable>(tokens);
+            return new SequenceTokenParserSlow<TToken, TUser, TEnumerable>(tokens);
         }
 
         static SequenceTokenParser()
@@ -125,19 +125,19 @@ namespace Pidgin
             var equatable = typeof(IEquatable<TToken>).GetTypeInfo();
             if (ttoken.IsValueType && equatable.IsAssignableFrom(ttoken))
             {
-                var ctor = typeof(SequenceTokenParserFast<,>)
-                    .MakeGenericType(typeof(TToken), typeof(TEnumerable))
+                var ctor = typeof(SequenceTokenParserFast<,,>)
+                    .MakeGenericType(typeof(TToken), typeof(TUser), typeof(TEnumerable))
                     .GetTypeInfo()
                     .DeclaredConstructors
                     .Single();
                 var param = LExpression.Parameter(typeof(TEnumerable));
                 var create = LExpression.New(ctor, param);
-                _createParser = LExpression.Lambda<Func<TEnumerable, Parser<TToken, TEnumerable>>>(create, param).Compile();
+                _createParser = LExpression.Lambda<Func<TEnumerable, Parser<TToken, TUser, TEnumerable>>>(create, param).Compile();
             }
         }
     }
 
-    internal sealed class SequenceTokenParserFast<TToken, TEnumerable> : Parser<TToken, TEnumerable>
+    internal sealed class SequenceTokenParserFast<TToken, TUser, TEnumerable> : Parser<TToken, TUser, TEnumerable>
         where TToken : struct, IEquatable<TToken>
         where TEnumerable : IEnumerable<TToken>
     {
@@ -150,7 +150,7 @@ namespace Pidgin
             _valueTokens = value.ToImmutableArray();
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out TEnumerable result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out TEnumerable result)
         {
             var span = state.LookAhead(_valueTokens.Length);  // span.Length <= _valueTokens.Length
             
@@ -201,7 +201,7 @@ namespace Pidgin
         }
     }
 
-    internal sealed class SequenceTokenParserSlow<TToken, TEnumerable> : Parser<TToken, TEnumerable>
+    internal sealed class SequenceTokenParserSlow<TToken, TUser, TEnumerable> : Parser<TToken, TUser, TEnumerable>
         where TEnumerable : IEnumerable<TToken>
     {
         private readonly TEnumerable _value;
@@ -213,7 +213,7 @@ namespace Pidgin
             _valueTokens = value.ToImmutableArray();
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out TEnumerable result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out TEnumerable result)
         {
             var span = state.LookAhead(_valueTokens.Length);  // span.Length <= _valueTokens.Length
             

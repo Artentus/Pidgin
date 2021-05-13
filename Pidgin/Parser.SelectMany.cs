@@ -2,7 +2,7 @@ using System;
 
 namespace Pidgin
 {
-    public abstract partial class Parser<TToken, T>
+    public abstract partial class Parser<TToken, TUser, T>
     {
         /// <summary>
         /// Creates a parser that applies a transformation function to the return value of the current parser.
@@ -13,7 +13,7 @@ namespace Pidgin
         /// <typeparam name="U">The type of the return value of the second parser</typeparam>
         /// <typeparam name="R">The type of the return value of the resulting parser</typeparam>
         /// <returns>A parser which applies the current parser before applying the result of the <paramref name="selector"/> function</returns>
-        public Parser<TToken, R> SelectMany<U, R>(Func<T, Parser<TToken, U>> selector, Func<T, U, R> result)
+        public Parser<TToken, TUser, R> SelectMany<U, R>(Func<T, Parser<TToken, TUser, U>> selector, Func<T, U, R> result)
         {
             if (selector == null)
             {

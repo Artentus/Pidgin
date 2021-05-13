@@ -4,10 +4,10 @@ using Pidgin.Configuration;
 
 namespace Pidgin
 {
-    public partial class Parser<TToken, T>
+    public partial class Parser<TToken, TUser, T>
     {
-        internal Parser<TToken, U> ChainAtLeastOnce<U, TChainer>(Func<IConfiguration<TToken>, TChainer> factory) where TChainer : struct, IChainer<T, U>
-            => new ChainAtLeastOnceLParser<TToken, T, U, TChainer>(this, factory);
+        internal Parser<TToken, TUser, U> ChainAtLeastOnce<U, TChainer>(Func<IConfiguration<TToken>, TChainer> factory) where TChainer : struct, IChainer<T, U>
+            => new ChainAtLeastOnceLParser<TToken, TUser, T, U, TChainer>(this, factory);
     }
 
     internal interface IChainer<in T, out U>
@@ -17,18 +17,18 @@ namespace Pidgin
         void OnError();
     }
 
-    internal class ChainAtLeastOnceLParser<TToken, T, U, TChainer> : Parser<TToken, U> where TChainer : struct, IChainer<T, U>
+    internal class ChainAtLeastOnceLParser<TToken, TUser, T, U, TChainer> : Parser<TToken, TUser, U> where TChainer : struct, IChainer<T, U>
     {
-        private readonly Parser<TToken, T> _parser;
+        private readonly Parser<TToken, TUser, T> _parser;
         private readonly Func<IConfiguration<TToken>, TChainer> _factory;
 
-        public ChainAtLeastOnceLParser(Parser<TToken, T> parser, Func<IConfiguration<TToken>, TChainer> factory)
+        public ChainAtLeastOnceLParser(Parser<TToken, TUser, T> parser, Func<IConfiguration<TToken>, TChainer> factory)
         {
             _parser = parser;
             _factory = factory;
         }
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out U result)
+        public sealed override bool TryParse(ref ParseState<TToken, TUser> state, ref PooledList<Expected<TToken>> expecteds, [MaybeNullWhen(false)] out U result)
         {
             if (!_parser.TryParse(ref state, ref expecteds, out var result1))
             {

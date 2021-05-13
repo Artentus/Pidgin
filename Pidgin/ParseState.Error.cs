@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace Pidgin
 {
-    public partial struct ParseState<TToken>
+    public partial struct ParseState<TToken, TUser>
     {
         private bool _eof;
         private Maybe<TToken> _unexpected;
