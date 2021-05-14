@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Authors>benjamin.hodgson</Authors>
+    <Authors>benjamin.hodgson, Mathis Rech</Authors>
     <Copyright>© Benjamin Hodgson, 2017</Copyright>
-    <Description>A lightweight, fast, and flexible parsing library for C#, developed at Stack Overflow.</Description>
+    <Description>A lightweight, fast, and flexible parsing library for C#, developed at Stack Overflow. Extended with user states.</Description>
     <PackageTags>parser;parsing;language;compiler</PackageTags>
 
-    <PackageProjectUrl>https://github.com/benjamin-hodgson/Pidgin</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/benjamin-hodgson/Pidgin</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Artentus/Pidgin</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Artentus/Pidgin</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -19,7 +19,10 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Pidgin.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\StatefulPidgin.snk</AssemblyOriginatorKeyFile>
+    <PackageId>StatefulPidgin</PackageId>
+    <Product>StatefulPidgin</Product>
+    <AssemblyName>StatefulPidgin</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
